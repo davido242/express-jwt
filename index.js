@@ -1,5 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+// const crypto = require("crypto");
+const secrete = require('crypto').randomBytes(64).toString('hex')
 
 const app = express();
 
@@ -7,9 +9,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   res.send("Hi");
   console.error("Cooking something");
+  console.log(secrete);
+//   const { createHmac } = await import('node:crypto');
+//   const secret = 'abcdefg';
+//   const hash = createHmac('sha256', secret)
+//                .update('I love cupcakes')
+//                .digest('hex');
+// console.log(hash);
+  
 })
 
 app.get("/api", (req, res) => {
@@ -46,17 +56,33 @@ app.post("/api/login", (req, res) => {
   })
 })
 
-function verifyToken(req, res, next) {
-  const bearerHeader = req.headers["Authorization"];
+app.get('/protected-route', (req, res) => {
+  // Your protected route logic here
+  res.send('This route is protected');
+});
 
-  if(typeof bearerHeader !== "undefined") {
-    const bearerToken = bearerHeader.split("")[1];
-    req.token = bearerToken;
+function verifyToken(req, res, next) {
+  const token = req.header('Authorization');
+  if (!token) return res.status(401).send('Access denied Dave');
+
+  jwt.verify(token, 'your-secret-key', (err, user) => {
+    if (err) return res.status(403).send('Invalid token Guyy');
+    req.user = user;
     next();
-  } else {
-    res.sendStatus(403);
-  }
+  });
 }
+
+// function verifyToken(req, res, next) {
+//   const bearerHeader = req.headers["Authorization"];
+
+//   if(typeof bearerHeader !== "undefined") {
+//     const bearerToken = bearerHeader.split("")[1];
+//     req.token = bearerToken;
+//     next();
+//   } else {
+//     res.sendStatus(403);
+//   }
+// }
 
 
 app.listen(3004, () => {
